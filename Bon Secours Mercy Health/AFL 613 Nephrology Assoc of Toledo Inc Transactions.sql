@@ -1,0 +1,102 @@
+select 
+ tdl.TDL_ID
+,tdl.TX_ID
+,tdl.TRAN_TYPE
+,ztt.NAME as TRAN_TYPE_DESC
+,tdl.DETAIL_TYPE
+,zdt.NAME as DETAIL_TYPE_DESC
+,tdl.POST_DATE
+,tdl.ORIG_POST_DATE
+,tdl.ORIG_SERVICE_DATE
+,tdl.ACCOUNT_ID
+,tdl.TX_NUM as ACCT_TX_NUM
+,tdl.VISIT_NUMBER as ACCT_VISIT_NUM
+,acct.TOTAL_BALANCE as ACCT_TOTAL_BALANCE
+,acct.INSURANCE_BALANCE as ACCT_INSURANCE_BALANCE
+,acct.PATIENT_BALANCE as ACCT_PATIENT_BALANCE
+,tdl.AMOUNT as TX_AMOUNT
+,tdl.PATIENT_AMOUNT as TX_PATIENT_AMOUNT
+,tdl.INSURANCE_AMOUNT as TX_INSURANCE_AMOUNT
+,tdl.BILL_CLAIM_AMOUNT as TX_BILL_CLAIM_AMOUNT
+,tdl.BILL_HOLD_AMOUNT as TX_BILL_HOLD_AMOUNT
+,tdl.ACTION_AMOUNT as TX_ACTION_AMOUNT
+,tdl.POS_ID
+,pos.POS_NAME
+,pos.ADDRESS_LINE_1 as POS_ADD_LINE1
+,pos.ADDRESS_LINE_2 as POS_ADD_LINE2
+,pos.CITY as POS_CITY
+,state_pos.ABBR as POS_STATE
+,pos.ZIP as POS_ZIP
+,tdl.LOC_ID 
+,loc.LOC_NAME
+,tdl.SERV_AREA_ID
+,sa.SERV_AREA_NAME
+,tdl.DEPT_ID
+,dep.DEPARTMENT_NAME
+,ser_bill.PROV_NAME as BILL_PROV_NAME
+,ser_bill_2.NPI as BILL_PROV_NPI
+,ser_perf.PROV_NAME as SERV_PROV_NAME
+,ser_perf_2.NPI as SERV_PROV_NPI
+,tdl.PAT_ENC_CSN_ID
+,epm_orig.PAYOR_ID as ORIGINAL_PAYOR_ID
+,epm_orig.PAYOR_NAME as ORIGINAL_PAYOR
+,epm_cur.PAYOR_ID as CURRENT_PAYOR_ID
+,epm_cur.PAYOR_NAME as CURRENT_PAYOR
+,fc.FINANCIAL_CLASS as CURRENT_FINANCIAL_CLASS
+,edg1.CURRENT_ICD10_LIST as DX_1_ICD10
+,edg2.CURRENT_ICD10_LIST as DX_2_ICD10
+,edg3.CURRENT_ICD10_LIST as DX_3_ICD10
+,edg4.CURRENT_ICD10_LIST as DX_4_ICD10
+,edg5.CURRENT_ICD10_LIST as DX_5_ICD10
+,edg6.CURRENT_ICD10_LIST as DX_6_ICD10
+,edg1.CURRENT_ICD9_LIST as DX_1_ICD9
+,edg2.CURRENT_ICD9_LIST as DX_2_ICD9
+,edg3.CURRENT_ICD9_LIST as DX_3_ICD9
+,edg4.CURRENT_ICD9_LIST as DX_4_ICD9
+,edg5.CURRENT_ICD9_LIST as DX_5_ICD9
+,edg6.CURRENT_ICD9_LIST as DX_6_ICD9
+,eap.PROC_CODE as CPT_CODE 
+,eap.PROC_NAME
+,tdl.PROCEDURE_QUANTITY
+,pat.PAT_ID
+,pat.PAT_LAST_NAME
+,pat.PAT_FIRST_NAME
+,pat.PAT_MIDDLE_NAME
+,pat.BIRTH_DATE as PAT_DOB
+,pat.ADD_LINE_1 as PAT_ADD_LINE_1
+,pat.ADD_LINE_2 as PAT_ADD_LINE_2
+,pat.CITY as PAT_CITY
+,state_pat.ABBR as PAT_STATE
+,pat.ZIP as PAT_ZIP
+,tdl.REFERRAL_SOURCE_ID as REFERRAL_ID
+,ser_ref.PROV_NAME as REFERRING_PROV_NAME
+
+from CLARITY_TDL_TRAN tdl
+left join ZC_TRAN_TYPE ztt on ztt.TRAN_TYPE = tdl.TRAN_TYPE
+left join ZC_DETAIL_TYPE zdt on zdt.DETAIL_TYPE = tdl.DETAIL_TYPE
+left join ACCOUNT acct on acct.ACCOUNT_ID = tdl.ACCOUNT_ID
+left join CLARITY_POS pos on pos.POS_ID = tdl.POS_ID
+left join CLARITY_SA sa on sa.SERV_AREA_ID = tdl.SERV_AREA_ID
+left join CLARITY_LOC loc on loc.LOC_ID = tdl.LOC_ID
+left join CLARITY_DEP dep on dep.DEPARTMENT_ID = tdl.DEPT_ID
+left join PATIENT pat on pat.PAT_ID = tdl.INT_PAT_ID
+left join CLARITY_EDG edg1 on edg1.DX_ID = tdl.DX_ONE_ID
+left join CLARITY_EDG edg2 on edg2.DX_ID = tdl.DX_TWO_ID
+left join CLARITY_EDG edg3 on edg3.DX_ID = tdl.DX_THREE_ID
+left join CLARITY_EDG edg4 on edg4.DX_ID = tdl.DX_FOUR_ID
+left join CLARITY_EDG edg5 on edg5.DX_ID = tdl.DX_FIVE_ID
+left join CLARITY_EDG edg6 on edg6.DX_ID = tdl.DX_SIX_ID
+left join CLARITY_EAP eap on eap.PROC_ID = tdl.PROC_ID
+left join CLARITY_SER ser_bill on ser_bill.PROV_ID = tdl.BILLING_PROVIDER_ID
+left join CLARITY_SER_2 ser_bill_2 on ser_bill_2.PROV_ID = ser_bill.PROV_ID
+left join CLARITY_SER ser_perf on ser_perf.PROV_ID = tdl.PERFORMING_PROV_ID
+left join CLARITY_SER_2 ser_perf_2 on ser_perf_2.PROV_ID = ser_perf.PROV_ID
+left join CLARITY_SER ser_ref on ser_ref.PROV_ID = tdl.REFERRAL_SOURCE_ID
+left join CLARITY_EPM epm_cur on epm_cur.PAYOR_ID = tdl.CUR_PAYOR_ID
+left join CLARITY_EPM epm_orig on epm_orig.PAYOR_ID = tdl.ORIGINAL_PAYOR_ID
+left join CLARITY_FC fc on fc.FINANCIAL_CLASS = tdl.CUR_FIN_CLASS
+left join ZC_STATE state_pos on state_pos.STATE_C = pos.STATE_C
+left join ZC_STATE state_pat on state_pat.STATE_C = pat.STATE_C
+
+where tdl.SERV_AREA_ID = 613
+and tdl.DETAIL_TYPE <= 33
