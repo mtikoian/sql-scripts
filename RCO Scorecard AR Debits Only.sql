@@ -160,7 +160,6 @@ where
 tdl.post_date >= @start_date
 and tdl.post_date <= @end_date
 
-
 group by
 region
 
@@ -191,7 +190,6 @@ left join clarity_dep dep on dep.department_id = age.dept_id
 where 
 age.post_date >= @start_date
 and age.post_date <= @end_date
-
 
 group by
 region
@@ -279,7 +277,6 @@ and enc.contact_date >= @12month
 and enc.contact_date <= @end_date
 and enc.appt_status_c in (2,6)
 
-
 group by
 region
 ),
@@ -335,7 +332,6 @@ where
 tdl.post_date >= @start_date
 and tdl.post_date <=@end_date
 and tdl.detail_type in (1,10)
-
 
 group by
 	region
@@ -424,28 +420,20 @@ and (ARPB_TX_VOID.OLD_ETR_ID IS NULL and ARPB_TX_VOID.REPOSTED_ETR_ID IS NULL an
 
 --and '{?Service or Post Date}'='Service Date'
 --and ARPB_TRANSACTIONS.SERVICE_DATE between EPIC_UTIL.EFN_DIN('{?StartDate}') AND EPIC_UTIL.EFN_DIN('{?EndDate}')
-
-
 --7/31/16 DSP Added 1312
 and loc.rpt_grp_ten in (11,13,16,17,18,19,21,1312) and
 ("ARPB_TRANSACTIONS"."SERVICE_DATE">=@start_date AND 
  "ARPB_TRANSACTIONS"."SERVICE_DATE"<=@end_date)
 
-
 group by
 region
 ),
 
-
 ver as
 (  SELECT 
 region,
-
               sum(1) as "Total Encounter",
-
               sum(case when "ZC_REG_STATUS"."NAME"='Verified' then 1 end) as "Verified"
-
-
 
 FROM  
 ((((("Clarity"."dbo"."PAT_ENC" "PAT_ENC" INNER JOIN "Clarity"."dbo"."PAT_ENC_2" "PAT_ENC_2" ON ("PAT_ENC"."PAT_ENC_CSN_ID"="PAT_ENC_2"."PAT_ENC_CSN_ID") AND ("PAT_ENC"."CONTACT_DATE"="PAT_ENC_2"."CONTACT_DATE")) 
