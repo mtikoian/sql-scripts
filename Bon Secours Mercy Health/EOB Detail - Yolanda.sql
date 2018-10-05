@@ -1,9 +1,29 @@
+select 
+ REGION
+,MONTH_OF_SERVICE
+,PROCEDURE_CODE
+,PROCEDURE_DESC
+,PRIMARY_PAYOR
+,FINANCIAL_CLASS
+,sum(CHARGE_AMOUNT) as CHARGE_AMT
+,sum(UNITS) as UNITS
+,sum(ALLOWED_AMT) as ALLOWED_AMT
+,sum(NON_ALLOWED_AMT) as NON_ALLOWED_AMT
+,sum(DEDUCTIBLE_AMT) as DEDUCTIBLE_AMT
+,sum(COPAY_AMT) as COPAY_AMT
+,sum(COINSURANCE_AMT) as COINSURANCE_AMT
+,sum(COB_AMT) as COB_AMT
+,sum(PAID_AMT) as PAID_AMT
+
+from
+
+(
 select
 -- top 100
  --eob.TDL_ID
  tdl.TX_ID as CHARGE_ETR
 ,date.YEAR_MONTH_STR as MONTH_OF_SERVICE
-,tdl.ORIG_SERVICE_DATE as SERVICE_DATE
+,cast(tdl.ORIG_SERVICE_DATE as date) as SERVICE_DATE
 ,upper(sa.NAME) as REGION
 --,tdl.POST_DATE
 ,eap.PROC_CODE as PROCEDURE_CODE
@@ -29,7 +49,7 @@ select
 
 
 from PMT_EOB_INFO_I eob
-inner join CLARITY_TDL_TRAN tdl on tdl.TDL_ID = eob.TDL_ID
+left join CLARITY_TDL_TRAN tdl on tdl.TDL_ID = eob.TDL_ID
 left join CLARITY_LOC loc on loc.LOC_ID = tdl.LOC_ID
 left join CLARITY_DEP dep on dep.DEPARTMENT_ID = tdl.DEPT_ID
 left join CLARITY_EAP eap on eap.PROC_ID = tdl.PROC_ID
@@ -45,6 +65,7 @@ where tdl.ORIG_SERVICE_DATE >= '1/1/2018'
 and tdl.ORIG_SERVICE_DATE <= '8/31/2018'
 and tdl.SERV_AREA_ID in (11,13,16,17,18,19)
 and (eob.NON_PRIMARY_SYS_YN <> 'Y' or eob.NON_PRIMARY_SYS_YN is null)
+and tdl.ORIG_AMT > 0
 --and tdl.TX_ID = 192988390
 --and tdl.TX_ID = 193000880
 
@@ -63,3 +84,12 @@ group by
 ,fc.FINANCIAL_CLASS_NAME
 ,tdl.ORIG_AMT
 ,tdl2.PROCEDURE_QUANTITY
+)a
+
+group by 
+ REGION
+,MONTH_OF_SERVICE
+,PROCEDURE_CODE
+,PROCEDURE_DESC
+,PRIMARY_PAYOR
+,FINANCIAL_CLASS
