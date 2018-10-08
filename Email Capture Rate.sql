@@ -3,7 +3,7 @@ declare @end_date as date = EPIC_UTIL.EFN_DIN('me-1')
 
 select 
  date.year_month as 'Year-Month'
-,case when loc.loc_id in (11106,11124,11149) then 'SPRINGFIELD'
+,case when loc.loc_id in (11106,11124,11149,19147) then 'SPRINGFIELD'
       when loc.loc_id in (18120,18121,19120,19127) then 'DEFIANCE'
       else upper(sa.name) end  as 'Region'
 ,cast(enc.contact_date as date) as 'Contact Date'
