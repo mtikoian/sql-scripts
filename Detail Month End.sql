@@ -1,0 +1,111 @@
+/*DETAIL MONTH END SQL*/
+
+SELECT a."PROC_CODE"
+	,a."ORIG_SERVICE_DATE"
+	,a.post_date
+	,a."GL_PREFIX"
+	,a."NAME"
+	,a."PROC_NAME"
+	,a."PAT_NAME"
+	,a."FINANCIAL_CLASS"
+	,a."LOC_NAME"
+	,a."SERV_AREA_ID"
+	,a."INT_PAT_ID"
+	,a."TX_ID"
+	,a.pat_mrn_id
+	,max(a.invoice_number) AS INVOICE_NUMBER
+	,sum(a.charges) AS CHARGES
+	,sum(a.payments) AS PAYMENTS
+	,sum(a.[Credit Adjustments]) AS CREDIT_ADJUSTMENT
+
+	from 
+
+	(
+SELECT "CLARITY_EAP"."PROC_CODE"
+	,"CLARITY_TDL_TRAN"."ORIG_SERVICE_DATE"
+	,post_date
+	,"CLARITY_LOC"."GL_PREFIX"
+	,"ZC_FINANCIAL_CLASS"."NAME"
+	,"CLARITY_EAP"."PROC_NAME"
+	,"PATIENT"."PAT_NAME"
+	,"ZC_FINANCIAL_CLASS"."FINANCIAL_CLASS"
+	,"CLARITY_LOC"."LOC_NAME"
+	,"CLARITY_TDL_TRAN"."PROCEDURE_QUANTITY"
+	,"CLARITY_TDL_TRAN"."SERV_AREA_ID"
+	,"CLARITY_TDL_TRAN"."INVOICE_NUMBER"
+	,"CLARITY_TDL_TRAN"."INT_PAT_ID"
+	,"CLARITY_TDL_TRAN"."TX_ID"
+	,patient.pat_mrn_id
+	,CASE 
+		WHEN detail_type IN (
+				1
+				,10
+				,40
+				,41
+				,42
+				,43
+				,44
+				,45
+				)
+			THEN amount
+		ELSE 0
+		END AS 'Charges'
+	,CASE 
+		WHEN detail_type IN (
+				2
+				,5
+				,11
+				,20
+				,22
+				,32
+				,33
+				)
+			THEN amount
+		ELSE 0
+		END AS 'Payments'
+	,CASE 
+		WHEN detail_type IN (
+				4
+				,6
+				,13
+				,21
+				,23
+				,30
+				,31
+				)
+			THEN amount
+		ELSE 0
+		END AS 'Credit Adjustments'
+FROM (
+	(
+		(
+			"Clarity"."dbo"."CLARITY_TDL_TRAN" "CLARITY_TDL_TRAN" LEFT OUTER JOIN "Clarity"."dbo"."CLARITY_EAP" "CLARITY_EAP" ON "CLARITY_TDL_TRAN"."PROC_ID" = "CLARITY_EAP"."PROC_ID"
+			) LEFT OUTER JOIN "Clarity"."dbo"."CLARITY_LOC" "CLARITY_LOC" ON "CLARITY_TDL_TRAN"."LOC_ID" = "CLARITY_LOC"."LOC_ID"
+		) LEFT OUTER JOIN "Clarity"."dbo"."ZC_FINANCIAL_CLASS" "ZC_FINANCIAL_CLASS" ON "CLARITY_TDL_TRAN"."ORIGINAL_FIN_CLASS" = "ZC_FINANCIAL_CLASS"."FINANCIAL_CLASS"
+	)
+LEFT OUTER JOIN "Clarity"."dbo"."PATIENT" "PATIENT" ON "CLARITY_TDL_TRAN"."INT_PAT_ID" = "PATIENT"."PAT_ID"
+WHERE (
+		"CLARITY_TDL_TRAN"."SERV_AREA_ID" = 11
+		OR "CLARITY_TDL_TRAN"."SERV_AREA_ID" = 13
+		OR "CLARITY_TDL_TRAN"."SERV_AREA_ID" = 16
+		OR "CLARITY_TDL_TRAN"."SERV_AREA_ID" = 17
+		OR "CLARITY_TDL_TRAN"."SERV_AREA_ID" = 18
+		OR "CLARITY_TDL_TRAN"."SERV_AREA_ID" = 19
+		)
+	
+		and account_id = '100019319'
+	)a
+
+	GROUP BY a."PROC_CODE"
+	,a."ORIG_SERVICE_DATE"
+	,a.post_date
+	,a."GL_PREFIX"
+	,a."NAME"
+	,a."PROC_NAME"
+	,a."PAT_NAME"
+	,a."FINANCIAL_CLASS"
+	,a."LOC_NAME"
+	,a."SERV_AREA_ID"
+	,a."INT_PAT_ID"
+	,a."TX_ID"
+	,a.pat_mrn_id

@@ -1,0 +1,11 @@
+SELECT 
+	tdl.TX_ID
+	,tai.LOCKIN_PRECONC_VAL --(CONCURRENCY_CALC)
+	,tdl.POST_DATE
+FROM
+	CLARITY_TDL_TRAN tdl
+	LEFT JOIN TX_ANES_INFO tai on tdl.TX_ID = tai.TX_ID
+WHERE 
+	tdl.TYPE_OF_SERVICE = '7'and
+	tdl.DETAIL_TYPE in ('1','10')
+	and tdl.POST_DATE between '06/01/2014' and '06/30/2014'

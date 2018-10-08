@@ -1,0 +1,12 @@
+select 
+ emp.USER_ID
+,emp.NAME as 'USER_NAME'
+,emp.SYSTEM_LOGIN
+,stat.NAME as 'STATUS'
+,emp.LNK_SEC_TEMPLT_ID as 'APPLIED_LINKABLE_TEMPLATE'
+,sub.APPLD_SUBTMPLT_ID as 'LINKED_SUBTEMPLATES'
+,emp.DFLT_SEC_CLASS_C as 'A/R_CLASSIFICATION'
+from CLARITY_EMP emp
+left join SUBTEMPLATES sub on sub.USER_ID = emp.USER_ID
+left join ZC_USER_STATUS stat on stat.USER_STATUS_C = emp.USER_STATUS_C
+order by emp.USER_ID
