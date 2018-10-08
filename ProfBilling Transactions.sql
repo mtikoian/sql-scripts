@@ -1,44 +1,46 @@
 select
- date.MONTHNAME_YEAR as 'MONTH'
-,date.YEAR_MONTH as 'YEAR-MONTH'
-,loc.REGION
-,loc.LOC_NAME as 'LOCATION'
-,dep.DEPARTMENT_NAME as 'DEPARTMENT'
-,tdl.ORIG_SERVICE_DATE as 'SERVICE DATE'
-,tdl.POST_DATE as 'POST DATE'
-,tdl.DETAIL_TYPE as 'DETAIL TYPE'
-,eap.PROC_CODE as 'CPT CODE'
-,eap.PROC_NAME as 'PROCEDURE'
-,eap_match.PROC_NAME as 'PROCEDURE - MATCHED'
-,case when tdl.DETAIL_TYPE in (1,10) then tdl.AMOUNT end as 'CHARGE'
-,case when tdl.DETAIL_TYPE in (1,10) and month(tdl.POST_DATE) = month(tdl.ORIG_SERVICE_DATE) then tdl.AMOUNT else 0 end as 'CURRENT CHARGE'
-,(case when tdl.DETAIL_TYPE in (1,10) then tdl.AMOUNT else 0 end) - (case when tdl.DETAIL_TYPE in (1,10) and month(tdl.POST_DATE) = month(tdl.ORIG_SERVICE_DATE) then tdl.AMOUNT else 0 end) as 'LATE CHARGE'
-,case when tdl.DETAIL_TYPE in (1,10,3,12,4,6,13,21,23,30,31) then tdl.AMOUNT end as 'NET REVENUE'
-,case when tdl.DETAIL_TYPE in (2,5,11,20,22,32,33) then tdl.AMOUNT end *-1 as 'PAYMENT'
-,case when tdl.DETAIL_TYPE in (2,5,11,20,22,32,33) then tdl.PATIENT_AMOUNT else 0 end as 'PATIENT PAYMENT'
-,case when tdl.DETAIL_TYPE in (2,5,11,20,22,32,33) then tdl.INSURANCE_AMOUNT else 0 end as 'INSURANCE PAYMENT'
-,case when tdl.DETAIL_TYPE in (4,6,13,21,23,30,31) then tdl.AMOUNT else 0 end as 'CREDIT ADJUSTMENT'
-,case when tdl.DETAIL_TYPE in (3,12) then tdl.AMOUNT else 0 end as 'DEBIT ADJUSTMENT'
-,tdl.AMOUNT as 'NET CHANGE IN AR'
-,case when tdl.DETAIL_TYPE <= 13 and (eap.GL_NUM_DEBIT in ('BAD','BADRECOVERY') or eap.GL_NUM_CREDIT in ('BAD','BADRECOVERY')) then tdl.AMOUNT end *-1 as 'BAD DEBT'
-,case when tdl.DETAIL_TYPE <= 13 and (eap.GL_NUM_DEBIT in ('CHARITY') or eap.GL_NUM_CREDIT in ('CHARITY')) then tdl.AMOUNT end *-1 as 'CHARITY'
-,case when eap_match.PROC_CODE in ('4017','4018','4019','4020','4021','3011','3012','3013','3014','3015','3018','3019','3052','5036') then tdl.AMOUNT end *-1 as 'FINAL DENIAL'
-,case when tdl.DETAIL_TYPE in (1,10) and fc.FINANCIAL_CLASS_NAME in ('MEDICARE','MEDICARE MANAGED') then tdl.AMOUNT end as 'MEDICARE CHARGE'
-,case when tdl.DETAIL_TYPE in (1,10) and fc.FINANCIAL_CLASS_NAME in ('MEDICAID','MEDICAID MANAGED') then tdl.AMOUNT end as 'MEDICAID CHARGE'
-,case when tdl.DETAIL_TYPE in (1,10) and fc.FINANCIAL_CLASS_NAME in ('COMMERCIAL','MANAGED CARE') then tdl.AMOUNT end as 'COMMERCIAL CHARGE'
-,case when tdl.DETAIL_TYPE in (1,10) and fc.FINANCIAL_CLASS_NAME in ('BX Traditional','BX Managed') then tdl.AMOUNT end as 'BLUE_CROSS CHARGE'
-,case when tdl.DETAIL_TYPE in (1,10) and fc.FINANCIAL_CLASS_NAME = 'OTHER' then tdl.AMOUNT end as 'OTHER CHARGE'
-,case when tdl.DETAIL_TYPE in (1,10) and fc.FINANCIAL_CLASS_NAME = 'SELF-PAY' then tdl.AMOUNT end as 'SELF PAY CHARGE'
+ tdl.ORIG_SERVICE_DATE as 'Service Date'
+,tdl.POST_DATE as 'Post Date'
+,det.DETAIL_TYPE as 'Detail Type ID'
+,det.NAME as 'Detail Type'
+,eap.PROC_CODE as 'Procedure Code'
+,eap.PROC_NAME as 'Procedure'
+,eap.GL_NUM_CREDIT as 'Procedure GL Credit'
+,eap.GL_NUM_DEBIT as 'Procedure GL Debit'
+,eap_match.PROC_CODE as 'Procedure Code - Matched'
+,eap_match.PROC_NAME as 'Procedure - Matched'
+,tdl.DEPT_ID as 'Department ID'
+,dep.DEPARTMENT_NAME as 'Department'
+,dep.SPECIALTY as 'Department Specialty'
+,dep.GL_PREFIX as 'Department GL'
+,tdl.LOC_ID as 'Location ID'
+,loc.LOC_NAME as 'Location'
+,loc.GL_PREFIX as 'Location GL'
+,sa.RPT_GRP_TEN as 'Region ID'
+,upper(sa.NAME) as 'Region'
+,ser_bill.PROV_ID as 'Billing Provider ID'
+,ser_bill.PROV_NAME as 'Billing Provider'
+,ser_perf.PROV_ID as 'Service Provider ID'
+,ser_perf.PROV_NAME as 'Service Provider'
+,orig_fc.FINANCIAL_CLASS_NAME as 'Original FC'
+,cur_fc.FINANCIAL_CLASS_NAME as 'Current FC'
+,tdl.PATIENT_AMOUNT as 'Patient Amount'
+,tdl.INSURANCE_AMOUNT as 'Insurance Amount'
+,tdl.AMOUNT as 'Amount'
 
 from CLARITY.dbo.CLARITY_TDL_TRAN tdl
-left join CLARITY.dbo.CLARITY_EAP eap_match on eap_match.PROC_ID = tdl.MATCH_PROC_ID
-left join CLARITY.dbo.CLARITY_EAP eap on eap.PROC_ID = tdl.PROC_ID
-left join CLARITY.dbo.CLARITY_FC fc on fc.FINANCIAL_CLASS = tdl.ORIGINAL_FIN_CLASS
-left join CLARITYCHPUTIL.rpt.V_PB_LOCATIONS loc on loc.LOC_ID = tdl.LOC_ID
-left join CLARITYCHPUTIL.rpt.V_PB_DEPARTMENTS dep on dep.DEPARTMENT_ID = tdl.DEPT_ID
-left join CLARITY.dbo.DATE_DIMENSION date on date.CALENDAR_DT = tdl.POST_DATE
+left join ZC_DETAIL_TYPE det on det.DETAIL_TYPE = tdl.DETAIL_TYPE
+left join CLARITY_EAP eap on eap.PROC_ID = tdl.PROC_ID
+left join CLARITY_EAP eap_match on eap_match.PROC_ID = tdl.MATCH_PROC_ID
+left join CLARITY_DEP dep on dep.DEPARTMENT_ID = tdl.DEPT_ID
+left join CLARITY_LOC loc on loc.LOC_ID = tdl.LOC_ID
+left join ZC_LOC_RPT_GRP_10 sa on sa.RPT_GRP_TEN = loc.RPT_GRP_TEN
+left join CLARITY_SER ser_bill on ser_bill.PROV_ID = tdl.BILLING_PROVIDER_ID
+left join CLARITY_SER ser_perf on ser_perf.PROV_ID = tdl.PERFORMING_PROV_ID
+left join CLARITY_FC orig_fc on orig_fc.FINANCIAL_CLASS = tdl.ORIGINAL_FIN_CLASS
+left join CLARITY_FC cur_fc on cur_fc.FINANCIAL_CLASS = tdl.CUR_FIN_CLASS
 
-where tdl.POST_DATE >= '3/1/2018'
+where tdl.POST_DATE >= '5/1/2018'
 and tdl.POST_DATE <= '5/31/2018'
 and tdl.DETAIL_TYPE <= 33
 and tdl.SERV_AREA_ID in (11,13,16,17,18,19)
