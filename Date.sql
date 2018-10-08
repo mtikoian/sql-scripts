@@ -1,0 +1,12 @@
+select 
+ dd.CALENDAR_DT
+,dd.CALENDAR_DT_STR
+,dd.YEAR_MONTH
+,dd.YEAR
+,dd.MONTH_NAME
+,dd.MONTHNAME_YEAR
+
+from CLARITY.dbo.DATE_DIMENSION dd
+
+where dd.CALENDAR_DT >= '1/1/2017'
+and dd.CALENDAR_DT <= getdate()

@@ -1,0 +1,11 @@
+USE ClarityCHPUTil
+
+select 
+
+ SERV_AREA_ID
+,SERV_AREA_NAME
+,'' as SERV_AREA_ABBR
+,'' as SERV_AREA_TYPE
+,'' as SERV_AREA_GROUP
+ from V_PB_SERVICE_AREA
+
