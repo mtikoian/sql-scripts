@@ -1,4 +1,5 @@
 
+
 -- FILE_1_Epic_PB_PRE_AR_CHG_Select
 --	NOTES : 
 		-- 1. Use script to create Pipe delimited file with header record 
@@ -9,6 +10,13 @@
 		-- 5. For 'BillingProviderNPI', are using table CL_EAF_ID (rev ids) to derive the 'organizational NPI'.  Note that this could differ between clients.
 		-- 6. HARDCODE LEFT JOIN dbo.CL_EAF_ID	qualifier for MPI_ID_TYPE_ID (2 places)
 		-- 7. mapping TAR_ID into ProspectiveClaimId and PatientAcctNo (info)
+		-- 8. CFI code derivation by mapping values from Epic table ZC_FIN_CLASS to standard CFI codes
+			/* Execute this query on Client Epic system to get table values
+				select
+				TITLE,ABBR
+				from ZC_FIN_CLASS
+				order by TITLE
+			*/
 
 SELECT DISTINCT 
 						'24' as ClientId,
@@ -83,7 +91,32 @@ SELECT DISTINCT
 						END AS PatientSex,           
 						EPM.[PAYOR_NAME] AS PrimaryPayerName,
 						EPM.[PAYOR_ID] AS PrimaryPayerCode, 
-						FIN_CL.[TITLE] + '^' + FIN_CL.[ABBR] AS PrimaryPayerCFI, --custom way of deriving a partial 'CFI' --SAVE BOTH for usage
+						--Custom way of deriving a partial 'CFI' per client.  We use both fields in case of table updates
+						PrimaryPayerCFI = CASE 
+							WHEN FIN_CL.TITLE like 'BLUE SHIELD%'		or FIN_CL.ABBR like 'BS' then 'BL'
+							WHEN FIN_CL.TITLE like 'BX MANAGED%'		or FIN_CL.ABBR like 'BX MNGD' then 'BL'
+							WHEN FIN_CL.TITLE like 'BX TRADITIONAL%'	or FIN_CL.ABBR like 'BX TRAD' then 'BL'
+							WHEN FIN_CL.TITLE like 'CHAMPVA%'			or FIN_CL.ABBR like 'CVA' then 'VA'
+							WHEN FIN_CL.TITLE like 'COMMERCIAL%'		or FIN_CL.ABBR like 'COMM' then 'CI'
+							WHEN FIN_CL.TITLE like 'DK REGIONAL%'		or FIN_CL.ABBR like 'DK Reg' then 'CI'
+							WHEN FIN_CL.TITLE like 'FECA BLACK LUNG%'	or FIN_CL.ABBR like 'FECA BL' then 'FI'
+							WHEN FIN_CL.TITLE like 'GROUP HEALTH PLAN%' or FIN_CL.ABBR like 'GHP' then 'CI'
+							WHEN FIN_CL.TITLE like 'H1N1%'				or FIN_CL.ABBR like 'H1N1' then 'CI'
+							WHEN FIN_CL.TITLE like 'MANAGED CARE%'		or FIN_CL.ABBR like 'MNGD CARE' then 'CI'
+							WHEN FIN_CL.TITLE like 'MEDICAID'			or FIN_CL.ABBR like 'CAID' then 'MC'
+							WHEN FIN_CL.TITLE like 'MEDICAID MANAGED%'	or FIN_CL.ABBR like 'MG CAID' then 'MC'
+							WHEN FIN_CL.TITLE like 'MEDICARE'			or FIN_CL.ABBR like 'CARE'then 'MB'
+							WHEN FIN_CL.TITLE like 'MEDICARE MANAGED%'	or FIN_CL.ABBR like 'MG MCARE' then 'MB'
+							WHEN FIN_CL.TITLE like 'MEDIGAP%'			or FIN_CL.ABBR like 'MGAP' then 'CI'
+							WHEN FIN_CL.TITLE like 'OTHER%'				or FIN_CL.ABBR like 'Other' then 'CI'
+							WHEN FIN_CL.TITLE like 'PENDING MEDICAID%'	or FIN_CL.ABBR like 'Pending Medi' then 'MC'
+							WHEN FIN_CL.TITLE like 'SELF-PAY%'			or FIN_CL.ABBR like 'SELF' then '09'
+							WHEN FIN_CL.TITLE like 'SPLIT FEE PRICING FINANCIAL CLASS%' or FIN_CL.ABBR like 'Split Fee Pr' then 'CI'
+							WHEN FIN_CL.TITLE like 'TRANSPLANT%'		or FIN_CL.ABBR like 'Transplant' then 'CI'
+							WHEN FIN_CL.TITLE like 'TRICARE%'			or FIN_CL.ABBR like 'TCE' or FIN_CL.ABBR like '' then 'OF'
+							WHEN FIN_CL.TITLE like 'WORKER%COMP%'		or FIN_CL.ABBR like 'WC' then 'WC'
+							ELSE NULL
+							END, 
 						NULL AS SecondaryPayer, 
 						NULL AS SecondaryPayerCode, 
 						NULL AS SecondaryPayerCFI, 
