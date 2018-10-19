@@ -6,7 +6,7 @@ select
 ,sa.RPT_GRP_TEN
 ,upper(sa.NAME) as REGION
 ,eap.PROC_NAME
-,sum(arpb_tx.AMOUNT)*-1 as PAYMENT
+,arpb_tx.AMOUNT *
 
 from ARPB_TRANSACTIONS arpb_tx
 left join CLARITY_EAP eap on eap.PROC_ID = arpb_tx.PROC_ID

@@ -15,7 +15,7 @@ arpb_tx.SERVICE_DATE >= '1/1/2017'
 and arpb_tx.SERVICE_DATE <= '12/31/2017'
 and arpb_tx.SERVICE_AREA_ID in (11,13,16,17,18,19)
 and arpb_tx.TX_TYPE_C = 1 -- CHARGES
-and arpb_tx.VOID_DATE is null -- EXCLUDE VOIDS
+--and arpb_tx.VOID_DATE is null -- EXCLUDE VOIDS
 
 order by
  arpb_tx.TX_ID
