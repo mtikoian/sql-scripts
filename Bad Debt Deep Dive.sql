@@ -141,7 +141,7 @@ select
 ,eap_chg.proc_name as 'CHG PROC DESC'
 ,charge.orig_amt as 'CHG AMT'
 ,charge.match_trx_id as 'ADJ ID'
-,date.year_month as 'ADJ MONTH'
+,date.year_month_str as 'ADJ MONTH'
 ,cast(charge.post_date as date) as 'ADJ POST DATE'
 ,eap_adj.proc_code as 'ADJ PROC CODE'
 ,eap_adj.proc_name as 'ADJ PROC DESC'

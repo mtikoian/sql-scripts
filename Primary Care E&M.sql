@@ -1,10 +1,10 @@
-declare @start_date as date = EPIC_UTIL.EFN_DIN('1/1/2016')
+declare @start_date as date = EPIC_UTIL.EFN_DIN('mb-10')
 declare @end_date as date = EPIC_UTIL.EFN_DIN('me-1')
 
 select 
  year as 'Year'
-,year_month as 'Year-Month'
-,case when sa.name in ('11106','11124') then 'SPRINGFIELD'
+,year_month_str as 'Year-Month'
+,case when sa.name in ('11106','11124','19147') then 'SPRINGFIELD'
 	   else upper(sa.name) end as 'Service Area'
 ,ser.prov_id as 'Billing Provider ID'
 ,ser.prov_name as 'Billing Provider'
@@ -32,5 +32,5 @@ and tdl.billing_provider_id is not null
 and tdl.billing_provider_id not in ('1740570') -- AKIZIMANA, CHERIYA 
 --and ser.prov_id = '1620859'
 
-group by ser.prov_id, ser.prov_name, year, year_month, sa.name, eap.proc_code, eap.proc_name, dep.specialty
-order by ser.prov_id, ser.prov_name, year, year_month, sa.name, eap.proc_code, eap.proc_name, dep.specialty
+group by ser.prov_id, ser.prov_name, year, year_month_str, sa.name, eap.proc_code, eap.proc_name, dep.specialty
+order by ser.prov_id, ser.prov_name, year, year_month_str, sa.name, eap.proc_code, eap.proc_name, dep.specialty

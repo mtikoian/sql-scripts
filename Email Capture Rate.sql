@@ -1,8 +1,8 @@
-declare @start_date as date = EPIC_UTIL.EFN_DIN('mb-1')
+declare @start_date as date = EPIC_UTIL.EFN_DIN('mb-3')
 declare @end_date as date = EPIC_UTIL.EFN_DIN('me-1')
 
 select 
- date.year_month as 'Year-Month'
+ date.year_month_str as 'Year-Month'
 ,case when loc.loc_id in (11106,11124,11149,19147) then 'SPRINGFIELD'
       when loc.loc_id in (18120,18121,19120,19127) then 'DEFIANCE'
       else upper(sa.name) end  as 'Region'
@@ -15,17 +15,17 @@ select
 --,cast(pat.birth_date as date) as 'DOB'
 ,datediff(year,pat.birth_date,enc.contact_date) as 'Age at Encounter'
 --,case when pat.email_address like '%none%' or pat.email_address like '%noemail%' then '' else coalesce(pat.email_address,'') end as 'Email Address'
-,case when pat.email_address is null or pat.email_address like '%none%' or pat.email_address like '%noemail%' then 'NO' else 'YES' end as 'Email Address'
+,case when pat.email_address is null or pat.email_address like '%none%' or pat.email_address like '%noemail%' then '' else 'YES' end as 'Email Address'
 ,coalesce(no_email.name,'') as 'No Email Reason'
-,case when no_email.name is null then 'NO' else 'YES' end as 'No Email Reason'
+,case when no_email.name is null then 'NO' else 'YES' end as 'No Email Reason Yes or No'
 ,emp_appt.name as 'Appt Entry User'     
 ,emp_check.name as 'Checkin User'
 --,enc.pat_enc_csn_id
 --,REG_HX_EVENT_C
 --,REG_HX_USER_ID
-,coalesce(cast(epm.payor_id as varchar),'') as 'Payor ID'
-,coalesce(epm.payor_name,'') as 'Payor Name'
-,fc.name as 'Financial Class'
+,coalesce(cast(epm.payor_id as varchar),'4') as 'Payor ID'
+,coalesce(epm.payor_name,'SELF-PAY') as 'Payor Name'
+,coalesce(fc.name,'SELF-PAY' as 'Financial Class'
 
 
 from 

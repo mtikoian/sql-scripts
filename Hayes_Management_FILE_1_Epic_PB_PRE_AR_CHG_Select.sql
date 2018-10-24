@@ -1,5 +1,4 @@
 
-
 -- FILE_1_Epic_PB_PRE_AR_CHG_Select
 --	NOTES : 
 		-- 1. Use script to create Pipe delimited file with header record 
@@ -8,6 +7,7 @@
 		-- 3. HARDCODE 'ClientId' column per MDEnterprixe client code
 		-- 4. HARDCODE BillingProvFirstName with name of hospital or university.  I.e., 'XYZ Universtiy Hospital'
 		-- 5. For 'BillingProviderNPI', are using table CL_EAF_ID (rev ids) to derive the 'organizational NPI'.  Note that this could differ between clients.
+			  -- Use a default NPI provided by the client, as the CL_EAF is not always set up per LOC_ID
 		-- 6. HARDCODE LEFT JOIN dbo.CL_EAF_ID	qualifier for MPI_ID_TYPE_ID (2 places)
 		-- 7. mapping TAR_ID into ProspectiveClaimId and PatientAcctNo (info)
 		-- 8. CFI code derivation by mapping values from Epic table ZC_FIN_CLASS to standard CFI codes
@@ -23,8 +23,11 @@ SELECT DISTINCT
 						CHG.TAR_ID AS ProspectiveClaimId,	-- Unique identifier to link  3 files
 						'P' As ClaimType,						-- Professional
 
-						-- Billing provider <NEEDS FURTHER DEVELOPMENT>
-						EAF.MPI_ID AS [BillingProviderNPI],		-- 2010AA — BILLING PROVIDER NAME (Organization)  TBD
+						-- Billing provider 
+						CASE 
+							WHEN ISNULL(EAF.MPI_ID,'') <> '' THEN EAF.MPI_ID
+							ELSE '1205887023'
+						END AS [BillingProviderNPI],		-- 2010AA — BILLING PROVIDER NAME (Organization)
 						BillingProvFirstName = '',
 						BillingProvLastName = null,
 
