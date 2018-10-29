@@ -21,6 +21,6 @@ where loc.rpt_grp_six = 100
 and dep.DEPARTMENT_NAME not like '%do not use%'
 and loc.RPT_GRP_TEN in (11,13,16,17,18,19)
 and dep.department_id in (
-11101358,11101365,11101468
+19390386
 )
 order by dep.DEPARTMENT_ID
