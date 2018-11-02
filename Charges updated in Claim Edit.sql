@@ -9,7 +9,7 @@ select
 from 
 ARPB_TX_EDIT_HX hx
 left join ARPB_TRANSACTIONS tx  on tx.TX_ID = hx.TX_ID
-where tx.SERVICE_DATE between '9/1/2018' and '9/30/2018'
+where tx.SERVICE_DATE between '7/1/2018' and '9/30/2018'
 and tx.SERVICE_AREA_ID in (11,13,16,17,18,19)
 and (hx.REPOST_YN = 'N' or hx.REPOST_YN is null)
 and hx.line = 1
