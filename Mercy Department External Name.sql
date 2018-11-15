@@ -1,0 +1,9 @@
+select 
+ upper(sa.NAME) as MARKET
+,dep.DEPARTMENT_ID as 'EPIC_DEPT_ID'
+,dep.DEPARTMENT_NAME as 'DEPARTMENT_NAME'
+,EXTERNAL_NAME as 'EXTERNAL_DEPT_NAME'
+from CLARITY_DEP dep
+left join CLARITY_LOC loc on loc.LOC_ID = dep.REV_LOC_ID
+left join ZC_LOC_RPT_GRP_10 sa on sa.RPT_GRP_TEN = loc.RPT_GRP_TEN
+where loc.RPT_GRP_TEN in (1,11,13,16,17,18,19)
