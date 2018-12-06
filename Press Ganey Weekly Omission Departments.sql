@@ -21,7 +21,7 @@ left join clarity_loc loc on loc.loc_id = dep.rev_loc_id
 left join zc_loc_rpt_grp_10 sa on sa.RPT_GRP_TEN= loc.RPT_GRP_TEN
 where 
 dep.DEPARTMENT_ID in
-(11101468
+(19390389
 
 )
 order by dep.RPT_GRP_ONE
