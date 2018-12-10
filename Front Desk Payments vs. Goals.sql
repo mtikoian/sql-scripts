@@ -28,6 +28,7 @@ select
 ,dep.DEPARTMENT_ID
 ,dep.DEPARTMENT_NAME
 ,upper(sa.NAME) as REGION
+,emp.NAME as 'USER'
 ,sum(case when arpb_tx.VOID_DATE = arpb_tx.POST_DATE then 0 else arpb_tx.AMOUNT * -1 end) as PAYMENTS
 
 from goals
@@ -37,6 +38,7 @@ left join CLARITY_DEP dep on dep.DEPARTMENT_ID = arpb_tx.DEPARTMENT_ID
 left join DATE_DIMENSION date on date.CALENDAR_DT = arpb_tx.POST_DATE
 left join CLARITY_LOC loc on loc.LOC_ID = arpb_tx.LOC_ID
 left join ZC_LOC_RPT_GRP_10 sa on sa.RPT_GRP_TEN = loc.RPT_GRP_TEN
+left join CLARITY_EMP emp on emp.USER_ID = arpb_tx.USER_ID
 
 where arpb_tx.SERVICE_AREA_ID in (19)
 and arpb_tx.TX_TYPE_C = 2
@@ -49,6 +51,7 @@ group by
 ,dep.DEPARTMENT_ID
 ,dep.DEPARTMENT_NAME
 ,upper(sa.NAME)
+,emp.NAME
 
 )
 
@@ -69,6 +72,7 @@ select
 
 
  goals.Department_ID as DepartmentID
+,payments.[USER]
 ,cast(goals.CALENDAR_DT as date) as Date
 ,'1' as '1'
 ,goals.MONTHLY_GOAL - sum(payments.PAYMENTS) over (order by goals.CALENDAR_DT) as UpdatedDailyGoalNum
