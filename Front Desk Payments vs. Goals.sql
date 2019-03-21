@@ -3,7 +3,7 @@ with dates as
 select 
  *
 from DATE_DIMENSION date
-where date.YEAR_MONTH >= '201810'
+where date.YEAR_MONTH >= '201901'
 and WEEKEND_YN = 'N'
 and HOLIDAY_YN = 'N'
 and CALENDAR_DT <= EPIC_UTIL.EFN_DIN('me')
@@ -29,7 +29,7 @@ select
 ,dep.DEPARTMENT_ID
 ,dep.DEPARTMENT_NAME
 ,upper(sa.NAME) as REGION
---,emp.NAME as 'USER'
+,emp.NAME as 'USER'
 ,sum(case when arpb_tx.VOID_DATE = arpb_tx.POST_DATE then 0 else arpb_tx.AMOUNT * -1 end) as PAYMENTS
 
 from goals
@@ -53,14 +53,14 @@ group by
 ,dep.DEPARTMENT_ID
 ,dep.DEPARTMENT_NAME
 ,upper(sa.NAME)
---,emp.NAME
+,emp.NAME
 
 )
 
 select 
 
  goals.Department_ID as DepartmentID
---,coalesce(payments.[USER],'UNKNOWN USER') as 'USER'
+,coalesce(payments.[USER],'UNKNOWN USER') as 'USER'
 ,cast(goals.CALENDAR_DT as date) as Date
 ,YEAR_MONTH_STR
 

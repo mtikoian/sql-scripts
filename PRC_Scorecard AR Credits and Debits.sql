@@ -208,12 +208,14 @@ from pat_enc enc
 left join clarity_dep dep on dep.department_id = enc.department_id
 left join clarity_loc loc on loc.loc_id = dep.rev_loc_id
 left join clarity_prc prc on prc.prc_id = enc.appt_prc_id
+left join clarity_prc_2 prc2 on prc2.PRC_ID = prc.PRC_ID
+left join ZC_BENEFIT_GROUP zbg on zbg.BENEFIT_GROUP_C = prc2.BENEFIT_GROUP_C
 inner join region on region.loc_id = loc.loc_id
 
 where appt_status_c in (2,6) -- Arrived or Completed
 and  enc.contact_date >= @start_date
 and enc.contact_date <= @end_date
-and prc.benefit_group in ('Office Visit','PB Copay','Copay')
+and zbg.name in ('Office Visit','PB Copay','Copay')
 and enc.copay_due > 0
 and enc.pat_enc_csn_id <> 131850458
 and dep.department_id not in (

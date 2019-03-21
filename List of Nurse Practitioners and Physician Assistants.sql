@@ -1,0 +1,17 @@
+select
+ ser.PROV_ID
+,ser.PROV_NAME
+,ser.PROV_TYPE
+,ser.ACTIVE_STATUS
+,ser.BILL_PROV_YN
+,dep.DEPARTMENT_ID
+,dep.DEPARTMENT_NAME
+
+
+from CLARITY_SER ser
+left join CLARITY_SER_DEPT csd on csd.PROV_ID = ser.PROV_ID
+left join CLARITY_DEP dep on dep.DEPARTMENT_ID = csd.DEPARTMENT_ID
+
+where PROV_TYPE in ('NURSE PRACTITIONER','PHYSICIAN ASSISTANT')
+
+order by ser.PROV_ID

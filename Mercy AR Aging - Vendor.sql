@@ -49,10 +49,10 @@ left join clarity_edg edg3 on edg3.DX_ID = age.DX_THREE_ID
 left join CLARITY_EDG edg4 on edg4.DX_ID = age.DX_FOUR_ID
 left join V_ARPB_REMIT_CODES varc on varc.MATCH_CHG_TX_ID = age.TX_ID
 
-where post_date = '10/31/18'
-and loc.RPT_GRP_TEN in (11,13,16,17,18,19)
+where post_date = '12/31/18'
+and loc.RPT_GRP_TEN in (11)
 and datediff(dd,age.orig_service_date, age.post_date) >= 60
-and age.ORIG_AMT <= 250
+and age.ORIG_AMT <= 750 -- changed from $250 to $500 on 1/1/19
 and age.ORIGINAL_FIN_CLASS <> 4 -- REMOVE SELF PAY
 and age.ORIG_AMT = age.AMOUNT -- Original Amount = AR Amount
 and eap.TYPE_C = 1 -- charge procedures

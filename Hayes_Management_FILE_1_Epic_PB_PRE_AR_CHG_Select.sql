@@ -188,6 +188,10 @@ FROM
 											,'27497'
 											,'27502'
 											,'27504'
+											,'27493'
+											,'27503'
+											,'27505'
+											,'27501'
 											)		--******CLIENT SPECIFIC Charge Review Work Queues HARDCODED ***********
 							GROUP BY TAR_ID 
 						) AS WQ

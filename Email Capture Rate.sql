@@ -8,7 +8,7 @@ select
       else upper(sa.name) end  as 'Region'
 ,cast(enc.contact_date as date) as 'Contact Date'
 ,enc_type.name as 'Encounter Type'
-,dep.rpt_grp_two as 'Department'
+,dep.department_name as 'Department'
 ,zps.name as 'POS Type'
 ,pat.pat_id as 'Patient ID'
 --,pat.pat_name as 'Patient'
@@ -25,8 +25,8 @@ select
 --,REG_HX_USER_ID
 ,coalesce(cast(epm.payor_id as varchar),'4') as 'Payor ID'
 ,coalesce(epm.payor_name,'SELF-PAY') as 'Payor Name'
-,coalesce(fc.name,'SELF-PAY' as 'Financial Class'
-
+,coalesce(fc.name,'SELF-PAY') as 'Financial Class'
+,pat.email_address as 'Email Address'
 
 from 
 pat_enc enc

@@ -1,0 +1,16 @@
+select
+ BENEFIT_PLAN_ID as 'PLAN ID'
+,BENEFIT_PLAN_NAME as 'PLAN NAME'
+,epm.PAYOR_ID as 'PAYOR ID'
+,epm.PAYOR_NAME as 'PAYOR NAME'
+,BP_ADDR_LINE1 as 'PLAN ADDRESS 1'
+,BP_ADDR_LINE2 as 'PLAN ADDRESS 2'
+,BP_CITY as 'PLAN CITY'
+,zs.ABBR as 'PLAN STATE'
+,BP_ZIP as 'PLAN ZIP'
+,coalesce(zrse.NAME,'Active') as 'STATUS'
+
+from CLARITY_EPP epp
+left join CLARITY_EPM epm on epm.PAYOR_ID = epp.PAYOR_ID
+left join ZC_STATE zs on zs.STATE_C = BP_STATE_C
+left join ZC_RECORD_STAT_EPP zrse on zrse.RECORD_STAT_EPP_C = epp.RECORD_STAT_EPP_C

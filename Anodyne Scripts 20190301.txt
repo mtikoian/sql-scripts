@@ -1,0 +1,623 @@
+/**********************************************************************************************************
+Extract: DEPARTMENT
+Filename: Anodyne_Department_*.txt
+**********************************************************************************************************/
+
+SELECT 
+       D.DEPARTMENT_ID, 
+       D.DEPARTMENT_NAME, 
+       D.SPECIALTY_DEP_C,
+       D.SPECIALTY AS NAME, 
+       D.GL_PREFIX AS GL_PREFIX,
+       L.GL_PREFIX AS LOCATION_GL
+FROM   Clarity.dbo.CLARITY_DEP D
+LEFT OUTER JOIN Clarity.dbo.CLARITY_LOC L ON L.LOC_ID = D.REV_LOC_ID
+
+
+/**********************************************************************************************************
+Extract: DIAGNOSIS
+Filename: Anodyne_Diagnosis_*.txt
+**********************************************************************************************************/
+
+select DX_ID, DX_NAME, ICD9_CODE
+from clarity_edg
+where icd9_code is not null
+
+union 
+
+SELECT dx_id, dx_name, LEFT(ref_bill_code,20)
+FROM   "Clarity"."dbo"."CLARITY_EDG" "CLARITY_EDG" 
+LEFT OUTER JOIN ZC_EDG_CODE_SET ZEDGC ON ZEDGC.EDG_CODE_SET_C = CLARITY_EDG.REF_BILL_CODE_SET_C
+where ref_bill_code_set_c  = 2
+
+
+/**********************************************************************************************************
+Extract: GUARANTOR
+Filename: Anodyne_Guarantor_*.txt
+**********************************************************************************************************/
+
+SELECT ACCOUNT.ACCOUNT_ID,
+	ACCOUNT.ACCOUNT_NAME,
+	LEFT(REPLACE(
+            REPLACE(
+                REPLACE(
+                    LTRIM(RTRIM(ACCOUNT.BILLING_ADDRESS_1))
+                ,'  ',' '+CHAR(7))  --Changes 2 spaces to the OX model
+            ,CHAR(7)+' ','')        --Changes the XO model to nothing
+        ,CHAR(7),''),150) AS BILLING_ADDRESS_1, --Changes the remaining X's to nothing
+	LEFT(REPLACE(
+            REPLACE(
+                REPLACE(
+                    LTRIM(RTRIM(ACCOUNT.BILLING_ADDRESS_2))
+                ,'  ',' '+CHAR(7))  --Changes 2 spaces to the OX model
+            ,CHAR(7)+' ','')        --Changes the XO model to nothing
+        ,CHAR(7),''),150) AS BILLING_ADDRESS_2, --Changes the remaining X's to nothing
+	ACCOUNT.CITY,
+	ZC_STATE.NAME as STATE_NAME,
+	ACCOUNT.ZIP,
+	ACCOUNT.ACCOUNT_TYPE_C,
+	ZC_ACCOUNT_TYPE.NAME,
+	ZC_ACCOUNT_STATUS.NAME as 'ACCOUNT STATUS'
+FROM   Clarity.dbo.ACCOUNT ACCOUNT
+LEFT OUTER JOIN Clarity.dbo.ZC_STATE			
+	ON ACCOUNT.STATE_C=ZC_STATE.STATE_C
+LEFT OUTER JOIN	Clarity.dbo.ZC_ACCOUNT_TYPE		
+	ON ACCOUNT.ACCOUNT_TYPE_C = ZC_ACCOUNT_TYPE.ACCOUNT_TYPE_C
+LEFT OUTER JOIN	Clarity.dbo.ACCOUNT_STATUS		
+	ON ACCOUNT.ACCOUNT_ID = ACCOUNT_STATUS.ACCOUNT_ID
+LEFT OUTER JOIN	Clarity.dbo.ZC_ACCOUNT_STATUS	
+	ON ZC_ACCOUNT_STATUS.ACCOUNT_STATUS_C = ACCOUNT_STATUS.ACCOUNT_STATUS_C
+ORDER BY ACCOUNT.ACCOUNT_ID
+
+
+/**********************************************************************************************************
+Extract: LOCATION
+Filename: Anodyne_Location_*.txt
+**********************************************************************************************************/
+
+SELECT 
+	LOC_ID, 
+	LOC_NAME, 
+	LOCATION_GROUP, 
+	POS_TYPE, 
+	LOCATION_ABBR, 
+	RPT_GRP_TEN AS SERV_AREA_ID
+FROM   Clarity.dbo.CLARITY_LOC
+
+
+/**********************************************************************************************************
+Extract: PATIENT
+Filename: Anodyne_Patient_*.txt
+**********************************************************************************************************/
+
+SELECT 
+	P.PAT_ID, 
+	P.PAT_LAST_NAME, 
+	P.PAT_FIRST_NAME, 
+	P.PAT_MIDDLE_NAME, 
+	P.ZIP, 
+	P.BIRTH_DATE, 
+	P.PAT_MRN_ID, 
+	P.CITY, 
+	C.NAME as COUNTY_NAME, 
+	S.NAME as STATE_NAME, 
+	'' as 'CUR_PRIM_LOC_ID',
+	SEX.NAME AS SEX,
+	P.ADD_LINE_1,
+	P.ADD_LINE_2,
+	P.PAT_STATUS,
+	L.RPT_GRP_TEN as Service_Area
+ FROM   
+	Clarity.dbo.PATIENT P 
+	LEFT OUTER JOIN Clarity.dbo.ZC_COUNTY C ON P.COUNTY_C = C.COUNTY_C
+	LEFT OUTER JOIN Clarity.dbo.ZC_STATE S ON P.STATE_C = S.STATE_C
+	LEFT OUTER JOIN Clarity.dbo.ZC_Sex SEX ON P.SEX_C = SEX.INTERNAL_ID
+	LEFT OUTER JOIN Clarity.dbo.CLARITY_LOC L on L.loc_id = P.cur_prim_loc_id
+WHERE P.PAT_ID LIKE '[A-Z]%'
+
+
+/**********************************************************************************************************
+Extract: PATIENT_ENCOUNTER
+Filename: Anodyne_PatientEncounter_*.txt
+**********************************************************************************************************/
+
+SELECT 
+	 PAT_ID
+	,PAT_ENC_CSN_ID
+	,CONTACT_DATE
+	,COPAY_DUE
+	,COPAY_COLLECTED
+FROM clarity.dbo.PAT_ENC
+WHERE CONTACT_DATE >= ?
+AND CONTACT_DATE <= ?
+
+
+/**********************************************************************************************************
+Extract: PAYOR
+Filename: Anodyne_Payor_*.txt
+**********************************************************************************************************/
+
+SELECT "CLARITY_EPM"."PAYOR_ID",
+		 "CLARITY_EPM"."PAYOR_NAME", 
+		 "CLARITY_EPM"."FINANCIAL_CLASS", 
+		 ZC_FINANCIAL_CLASS.NAME,
+		 "CLARITY_EPM"."PRODUCT_TYPE", 
+		 "CLARITY_EPM"."ADDR_LINE_1", 
+		 "CLARITY_EPM"."ADDR_LINE_2", 
+		 "CLARITY_EPM"."CITY", 
+		 "CLARITY_EPM"."STATE_C", 
+		 "CLARITY_EPM"."COUNTY_C", 
+		 "CLARITY_EPM"."ZIP_CODE", 
+		 "CLARITY_EPM"."PHONE"
+ FROM   "Clarity"."dbo"."CLARITY_EPM" "CLARITY_EPM"
+		Left Outer Join dbo.ZC_FINANCIAL_CLASS
+			ON "CLARITY_EPM"."FINANCIAL_CLASS"="ZC_FINANCIAL_CLASS"."FINANCIAL_CLASS"
+
+
+/**********************************************************************************************************
+Extract: PLAN
+Filename: Anodyne_Plan_*.txt
+**********************************************************************************************************/
+
+SELECT
+    BENEFIT_PLAN_ID,
+    BENEFIT_PLAN_NAME,
+    COALESCE(RPT_GRP_TWO,'SELF PAY') AS FINANCIAL_CLASS,
+    COALESCE(RPT_GRP_ONE,'SELF PAY') AS ORIGINAL_PAYOR
+
+FROM Clarity.dbo.CLARITY_EPP
+
+
+/**********************************************************************************************************
+Extract: POS
+Filename: Anodyne_POS_*.txt
+**********************************************************************************************************/
+
+SELECT 
+	POS_ID, 
+	POS_NAME, 
+	POS_GROUP, 
+	POS_TYPE, 
+	ADDRESS_LINE_1, 
+	ADDRESS_LINE_2, 
+	CITY, 
+	STATE_C, 
+	ZIP, 
+	AREA_CODE, 
+	PHONE
+FROM Clarity.dbo.CLARITY_POS
+
+
+/**********************************************************************************************************
+Extract: PROCEDURE
+Filename: Anodyne_Procedure_*.txt
+**********************************************************************************************************/
+
+SELECT "CLARITY_EAP"."PROC_ID", 
+		"CLARITY_EAP"."PROC_NAME", 
+		"CLARITY_EAP"."PROC_CODE", 
+		"CLARITY_EAP"."PROC_CAT", 
+		"CLARITY_EAP"."PROC_TYPE", 
+		"CLARITY_EAP"."DEBIT_CREDIT", 
+		"CLARITY_EAP"."IS_ACTIVE_YN"
+ FROM   "Clarity"."dbo"."CLARITY_EAP" "CLARITY_EAP"
+
+
+/**********************************************************************************************************
+Extract: PROVIDER
+Filename: Anodyne_Provider_*.txt
+**********************************************************************************************************/
+
+SELECT CLARITY_SER.PROV_ID, 
+       CLARITY_SER.PROV_NAME,
+       CLARITY_SER.PROV_TYPE,
+       CLARITY_SER.IS_RESIDENT, 
+       CLARITY_SER_2.NPI, 
+       CLARITY_SER.CLINICIAN_TITLE, 
+       CLARITY_SER.ACTIVE_STATUS, 
+       CLARITY_SER.SER_REF_SRCE_ID,
+
+       GRP8.NAME as 'AMA_SPECIALTY',
+       GRP9.NAME as 'AMA_SUB_SPECIALTY',
+
+       CRED_SPEC.NAME AS 'CREDENTIALED SPECIALTY'
+FROM   Clarity.dbo.CLARITY_SER CLARITY_SER (NOLOCK)
+LEFT OUTER JOIN Clarity.dbo.CLARITY_SER_2 CLARITY_SER_2 (NOLOCK) ON CLARITY_SER.PROV_ID=CLARITY_SER_2.PROV_ID
+LEFT OUTER JOIN Clarity.dbo.ZC_SER_RPT_GRP_8 GRP8 (NOLOCK) ON GRP8.RPT_GRP_EIGHT = CLARITY_SER.RPT_GRP_EIGHT
+LEFT OUTER JOIN Clarity.dbo.ZC_SER_RPT_GRP_9 GRP9 (NOLOCK) ON GRP9.RPT_GRP_NINE = CLARITY_SER.RPT_GRP_NINE
+LEFT OUTER JOIN CLARITY_SER_SPEC P2 ON P2.PROV_ID = CLARITY_SER.PROV_ID AND P2.LINE = 1
+LEFT OUTER JOIN Clarity.dbo.ZC_SPECIALTY CRED_SPEC (NOLOCK) ON CRED_SPEC.SPECIALTY_C = P2.SPECIALTY_C
+
+
+/**********************************************************************************************************
+Extract: REFERRAL SOURCE
+Filename: Anodyne_ReferralSource_*.txt
+**********************************************************************************************************/
+
+SELECT "REFERRAL_SOURCE"."REFERRING_PROV_ID", "REFERRAL_SOURCE"."EPIC_REF_SOURCE_ID"
+ FROM   "Clarity"."dbo"."REFERRAL_SOURCE" "REFERRAL_SOURCE"
+
+
+/**********************************************************************************************************
+Extract: RMC
+Filename: Anodyne_RMC_*.txt
+**********************************************************************************************************/
+
+SELECT "CLARITY_RMC"."REMIT_CODE_ID",
+		"CLARITY_RMC"."REMIT_CODE_NAME", 
+		"CLARITY_RMC"."RPT_GROUP_C", 
+		"CLARITY_RMC"."RPT_GROUP_TITLE", 
+		"CLARITY_RMC"."REMIT_CODE_GROUP_C", 
+		"CLARITY_RMC"."PRIORITY"
+ FROM   "Clarity"."dbo"."CLARITY_RMC" "CLARITY_RMC"
+
+
+/**********************************************************************************************************
+Extract: SERVICE AREA
+Filename: Anodyne_ServiceArea_*.txt
+**********************************************************************************************************/
+
+SELECT 
+	SERV_AREA_ID, 
+	CASE WHEN SERV_AREA_ID = 19 THEN 'KENTUCKY' ELSE SERV_AREA_NAME END AS 'SERV_AREA_NAME', 
+	CASE WHEN SERV_AREA_ID = 19 THEN 'KYIN' ELSE SERV_AREA_ABBR END AS 'SERV_AREA_ABBR', 
+	SERV_AREA_TYPE, 
+	SERV_AREA_GROUP
+FROM   Clarity.dbo.CLARITY_SA CLARITY_SA
+WHERE  SERV_AREA_ID < 30
+OR SERV_AREA_ID = 1312
+
+
+/**********************************************************************************************************
+Extract: STATE
+Filename: Anodyne_State_*.txt
+**********************************************************************************************************/
+
+SELECT "ZC_STATE"."STATE_C", "ZC_STATE"."NAME", "ZC_STATE"."TITLE", "ZC_STATE"."ABBR"
+ FROM   "Clarity"."dbo"."ZC_STATE" "ZC_STATE"
+
+
+
+
+/**********************************************************************************************************
+Extract: TRANSACTIONS
+Filename: Anodyne_Transaction_*.txt
+
+This is the one file that I build in multiple phases in order to calculate the adjusted wRVU.
+**********************************************************************************************************/
+
+--****************************************
+--**STEP 1 BUILD TEMP CLARITY_EAP_OT TABLE
+--****************************************
+if object_id('SSIS.dbo.TMP_CLARITY_EAP_OT') is not null
+begin
+    drop table SSIS.dbo.TMP_CLARITY_EAP_OT
+end
+
+SELECT 
+	A.PROC_ID, 
+	A.CONTACT_DATE AS BEGIN_CONTACT_DATE,
+	CASE WHEN LEAD(A.CONTACT_DATE) OVER (PARTITION BY A.PROC_ID ORDER BY A.PROC_ID, A.CONTACT_DATE, A.CONTACT_DATE_REAL) IS NOT NULL THEN
+		LEAD(A.CONTACT_DATE) OVER (PARTITION BY A.PROC_ID ORDER BY A.PROC_ID, A.CONTACT_DATE, A.CONTACT_DATE_REAL)
+		ELSE DATEADD(dd,1,CAST(GETDATE() AS DATE))
+	END AS END_CONTACT_DATE,
+	A.RVU_WORK_COMPON
+INTO SSIS.dbo.TMP_CLARITY_EAP_OT
+FROM Clarity.dbo.CLARITY_EAP_OT A
+
+
+--****************************************
+--STEP 2 BUILD TEMP EAP_RVU_PER_MOD TABLE
+--****************************************
+if object_id('SSIS.dbo.TMP_EAP_RVU_PER_MOD') is not null
+begin
+    drop table SSIS.dbo.TMP_EAP_RVU_PER_MOD
+end
+
+SELECT       
+	B.PROC_ID, 
+	B.RVU_PER_MOD,
+    B.CONTACT_DATE AS BEGIN_CONTACT_DATE,
+    CASE WHEN LEAD(B.CONTACT_DATE) OVER (PARTITION BY B.PROC_ID, B.RVU_PER_MOD ORDER BY B.PROC_ID, B.RVU_PER_MOD, B.CONTACT_DATE, B.CONTACT_DATE_REAL) IS NOT NULL THEN
+        LEAD(B.CONTACT_DATE) OVER (PARTITION BY B.PROC_ID, B.RVU_PER_MOD ORDER BY B.PROC_ID, B.RVU_PER_MOD, B.CONTACT_DATE, B.CONTACT_DATE_REAL)
+        ELSE DATEADD(dd,1,CAST(GETDATE() AS DATE))
+    END AS END_CONTACT_DATE,
+    B.RVU_PER_MOD_WORK
+INTO SSIS.dbo.TMP_EAP_RVU_PER_MOD
+FROM Clarity.dbo.EAP_RVU_PER_MOD B
+
+
+--****************************************
+--STEP 3 BUILD TEMP MOD_OVERRIDE TABLE
+--****************************************
+IF OBJECT_ID('SSIS.dbo.TMP_MOD_OVERRIDE') IS NOT NULL
+BEGIN
+	DROP TABLE SSIS.dbo.TMP_MOD_OVERRIDE
+END
+
+/* This CTE gives us the most recent Line Item Override for each Modifier. */
+;WITH MOD_OVERRIDE_MAXLINE (MODIFIER_ID, LINE)
+AS
+(
+	SELECT MODIFIER_ID, MAX(LINE) AS LINE
+	FROM Clarity.dbo.CL_MOD_OVERRIDE
+	GROUP BY MODIFIER_ID
+)
+
+SELECT MO.MODIFIER_ID, CM.EXTERNAL_ID, CM.MODIFIER_NAME, MO.LINE, MO.RVU_CHG_PCT_OVRD, 
+		CASE WHEN MO.RVU_CHG_PCT_OVRD IS NOT NULL THEN 1.00 + (MO.RVU_CHG_PCT_OVRD/100)
+		ELSE 1.00
+		END AS MOD_PCT
+INTO SSIS.dbo.TMP_MOD_OVERRIDE
+FROM Clarity.dbo.CL_MOD_OVERRIDE MO
+JOIN MOD_OVERRIDE_MAXLINE MOM ON MOM.MODIFIER_ID = MO.MODIFIER_ID AND MOM.LINE = MO.LINE
+JOIN Clarity.dbo.CLARITY_MOD CM ON CM.MODIFIER_ID = MO.MODIFIER_ID
+WHERE MO.RVU_CHG_PCT_OVRD IS NOT NULL
+
+
+--****************************************
+--STEP 4 INITIALLY POPULATE TEMP TRANS TABLE
+--****************************************
+if object_id('SSIS.dbo.TMP_TRANS') is not null
+begin
+    drop table SSIS.dbo.TMP_TRANS
+end
+
+DECLARE @BPOSTDT DATETIME, @EPOSTDT DATETIME
+DECLARE @BEXTDT DATETIME, @EEXTDT DATETIME
+
+SELECT  @BPOSTDT = 		<PUT BEGIN POST DATE HERE>
+SELECT  @EPOSTDT = 		<PUT END POST DATE HERE>
+SELECT  @BEXTDT = 		<PUT BEGIN EXTRACT DATE HERE>
+SELECT  @EEXTDT = 		<PUT END EXTRACT DATE HERE>
+
+
+SELECT 
+	t.TDL_ID, 
+	t.DETAIL_TYPE, 
+	t.POST_DATE, 
+	t.ORIG_POST_DATE, 
+	t.ORIG_SERVICE_DATE, 
+	t.TX_ID, 
+	t.TRAN_TYPE, 
+	t.MATCH_TRX_ID, 
+	t.ACCOUNT_ID, 
+	t.PAT_ID, 
+	t.AMOUNT, 
+	t.PATIENT_AMOUNT, 
+	t.INSURANCE_AMOUNT, 
+	t.RELATIVE_VALUE_UNIT, 
+	t.CUR_PAYOR_ID, 
+	t.CUR_PLAN_ID, 
+	t.PROC_ID, 
+	t.PERFORMING_PROV_ID, 
+	t.BILLING_PROVIDER_ID, 
+	t.ORIGINAL_PAYOR_ID, 
+	t.ORIGINAL_PLAN_ID,   
+	t.PROCEDURE_QUANTITY, 
+	t.CPT_CODE, 
+	t.MODIFIER_ONE, 
+	t.MODIFIER_TWO, 
+	t.MODIFIER_THREE, 
+	t.MODIFIER_FOUR, 
+	t.DX_ONE_ID, 
+	t.DX_TWO_ID, 
+	t.DX_THREE_ID, 
+	t.DX_FOUR_ID, 
+	t.DX_FIVE_ID, 
+	t.DX_SIX_ID, 
+	
+	--t.SERV_AREA_ID
+	--loc2.serv_area_id as 'SERV_AREA_ID',	
+	loc.RPT_GRP_TEN AS 'SERV_AREA_ID',
+
+	--loc2.loc_id as 'LOC_ID', 
+	--loc.RPT_GRP_TWO as 'LOC_ID', 		
+	t.LOC_ID,
+
+	--dep2.dept_id as 'DEPT_ID',
+	--dep.RPT_GRP_ONE as 'DEPT_ID',
+	t.DEPT_ID, 
+
+	--cast(pos.rpt_grp_one as numeric) as 'POS_ID',
+	t.POS_ID, 
+	
+	t.INVOICE_NUMBER, 
+	t.CLM_CLAIM_ID, 
+	t.PAT_AGING_DAYS, 
+	t.INS_AGING_DAYS, 
+	t.ACTION_PAYOR_ID, 
+	t.REASON_CODE_ID, 
+	LEFT(t.USER_ID,18) AS USER_ID, 
+	t.TX_NUM, 
+	t.INT_PAT_ID, 
+
+	CASE 
+		WHEN t.POST_DATE < '2016-01-01' THEN t.RVU_WORK
+		WHEN t.MODIFIER_ONE = '26' OR t.MODIFIER_TWO = '26' OR t.MODIFIER_THREE = '26' OR t.MODIFIER_FOUR = '26' THEN COALESCE(mod26.RVU_PER_MOD_WORK, ot.RVU_WORK_COMPON, 0.00)
+		WHEN t.MODIFIER_ONE = 'TC' OR t.MODIFIER_TWO = 'TC' OR t.MODIFIER_THREE = 'TC' OR t.MODIFIER_FOUR = 'TC' THEN COALESCE(modTC.RVU_PER_MOD_WORK, ot.RVU_WORK_COMPON, 0.00)
+		ELSE COALESCE(ot.RVU_WORK_COMPON,0)
+	END AS RVU_WORK,
+
+	t.RVU_OVERHEAD, 
+	t.RVU_MALPRACTICE, 
+	t.REFERRAL_SOURCE_ID, 
+	t.REFERRAL_ID, 
+	t.MATCH_PAYOR_ID, 
+	t.VISIT_NUMBER, 
+	t.CHARGE_SLIP_NUMBER, 
+	t.PERIOD,
+	s.NAME AS CREDENTIALED_SPECIALTY,
+	
+	/* ONLY CONSIDER CHARGES (1) AND VOIDED CHARGES (10) FOR ADJUSTED WRVU (SUB_RVU).			*/
+
+	/*	CHARGES uses POST_DATE and VOIDED CHARGES uses ORIG_POST_DATE since a Voided Charge		*/
+	/*	will most likely cause the POST_DATE to be updated (and consequently, have a later		*/
+	/*	date than the original POST_DATE).  If the ORIG_POST_DATE occurred prior to 1/1/2016 	*/
+	/*	then distinguishing between ORIG_POST_DATE and POST_DATE will have an impact on the 	*/
+	/*	ADJ WRVU calculation since multipliers are not used in the ADJ WRVU calc beginning		*/
+	/*	on 1/1/2016.	*/
+	
+	CASE t.DETAIL_TYPE
+
+		/* 1 = CHARGES */
+		WHEN 1 THEN		
+
+			CASE 
+				/* PRE 4/1/2014 FORMULA.  BASICALLY SAME AS POST 4/1/2014 EXCEPT FEWER CPT CODE EXCEPTIONS. */
+				WHEN t.POST_DATE < '2014-04-01' THEN
+					CASE 
+						WHEN (t.CPT_CODE NOT IN ('90460', '90461', '90471', '90472', '90473', '90474') OR t.CPT_CODE IS NULL) THEN 
+							CASE 
+								WHEN COALESCE(t.RVU_WORK,0) > 0 THEN COALESCE(t.RVU_WORK,0) * COALESCE(t.PROCEDURE_QUANTITY,0)
+								ELSE COALESCE(t.RELATIVE_VALUE_UNIT,0)
+							END
+						ELSE 0
+					END
+
+				/* USE POST 4/1/2014 FORMULA WHEN POST_DATE > 3/31/2014 AND LESS THAN 5/1/2017. 											*/
+				/* NOTE:  Later, in the 'DFT - Get Transaction Data' task when we calculate ADJ WRVU, for 1/1/2016 and beyond, 				*/
+				/* do not use MULTIPLIERS in the ADJ WRVU calculation.  Multipliers are already worked into the RVU_WORK value after 2016.	*/
+				
+				WHEN t.POST_DATE >= '2014-04-01' AND t.POST_DATE < '2017-05-01' THEN
+					CASE 
+						WHEN (t.CPT_CODE NOT IN ('90460', '90461', '90471', '90472', '90473', '90474', '96360', '96365', '96401', '96413', '96415', '96420', '96422', '96423', '96425', '96440', '96446', '96450', '96542', '96361', '96366', '96367', '96368', '96369', '96370', '96371', '96372', '96373', '96374', '96375', '96376', '96379', '96402', '96405', '96406', '96409', '96411', '96416', '96417', '96523') OR t.CPT_CODE IS NULL) THEN 
+							CASE 
+								WHEN COALESCE(t.RVU_WORK,0) > 0 THEN COALESCE(t.RVU_WORK,0) * COALESCE(t.PROCEDURE_QUANTITY,0)
+								ELSE COALESCE(t.RELATIVE_VALUE_UNIT,0)
+							END
+						ELSE 0
+					END 
+
+				/* For 5/1/2017 and beyond, there were 2 new CPT CODES added to the exception list:  96521 and 96522.						*/
+				/* NOTE:  Later, in the 'DFT - Get Transaction Data' task when we calculate ADJ WRVU, for 1/1/2016 and beyond, 				*/
+				/* do not use MULTIPLIERS in the ADJ WRVU calculation.  Multipliers are already worked into the RVU_WORK value after 2016.	*/
+				
+				ELSE
+					CASE 
+						WHEN (t.CPT_CODE NOT IN ('90460', '90461', '90471', '90472', '90473', '90474', '96360', '96365', '96401', '96413', '96415', '96420', '96422', '96423', '96425', '96440', '96446', '96450', '96542', '96361', '96366', '96367', '96368', '96369', '96370', '96371', '96372', '96373', '96374', '96375', '96376', '96379', '96402', '96405', '96406', '96409', '96411', '96416', '96417', '96521', '96522', '96523') OR t.CPT_CODE IS NULL) THEN 
+							CASE
+								WHEN COALESCE(t.RVU_WORK,0) > 0 THEN COALESCE(t.RVU_WORK,0) * COALESCE(t.PROCEDURE_QUANTITY,0)
+								ELSE COALESCE(t.RELATIVE_VALUE_UNIT,0)
+							END
+						ELSE 0
+					END
+				END 
+
+		/* 10 = VOIDED CHARGES */
+		WHEN 10 THEN	
+			CASE 
+				/* PRE 4/1/2014 FORMULA.  BASICALLY SAME AS POST 4/1/2014 EXCEPT FEWER CPT CODE EXCEPTIONS. */
+				WHEN t.ORIG_POST_DATE < '2014-04-01' THEN
+					CASE 
+						WHEN (t.CPT_CODE NOT IN ('90460', '90461', '90471', '90472', '90473', '90474') OR t.CPT_CODE IS NULL) THEN 
+							CASE 
+								WHEN COALESCE(t.RVU_WORK,0) > 0 THEN COALESCE(t.RVU_WORK,0) * COALESCE(t.PROCEDURE_QUANTITY,0)
+								ELSE COALESCE(t.RELATIVE_VALUE_UNIT,0)
+							END
+						ELSE 0
+					END
+
+				/* USE POST 4/1/2014 FORMULA WHEN ORIG_POST_DATE > 3/31/2014 AND LESS THAN 5/1/2017. 										*/
+				/* NOTE:  Later, in the 'DFT - Get Transaction Data' task when we calculate ADJ WRVU, for 1/1/2016 and beyond, 				*/
+				/* do not use MULTIPLIERS in the ADJ WRVU calculation.  Multipliers are already worked into the RVU_WORK value after 2016.	*/
+				
+				WHEN t.ORIG_POST_DATE >= '2014-04-01' AND t.ORIG_POST_DATE < '2017-05-01' THEN
+					CASE 
+						WHEN (t.CPT_CODE NOT IN ('90460', '90461', '90471', '90472', '90473', '90474', '96360', '96365', '96401', '96413', '96415', '96420', '96422', '96423', '96425', '96440', '96446', '96450', '96542', '96361', '96366', '96367', '96368', '96369', '96370', '96371', '96372', '96373', '96374', '96375', '96376', '96379', '96402', '96405', '96406', '96409', '96411', '96416', '96417', '96523') OR t.CPT_CODE IS NULL) THEN 
+							CASE 
+								WHEN COALESCE(t.RVU_WORK,0) > 0 THEN COALESCE(t.RVU_WORK,0) * COALESCE(t.PROCEDURE_QUANTITY,0)
+								ELSE COALESCE(t.RELATIVE_VALUE_UNIT,0)
+							END
+						ELSE 0
+					END 
+
+				/* For 5/1/2017 and beyond, there were 2 new CPT CODES added to the exception list:  96521 and 96522.						*/
+				/* NOTE:  Later, in the 'DFT - Get Transaction Data' task when we calculate ADJ WRVU, for 1/1/2016 and beyond, 				*/
+				/* do not use MULTIPLIERS in the ADJ WRVU calculation.  Multipliers are already worked into the RVU_WORK value after 2016.	*/
+				
+				ELSE
+					CASE 
+						WHEN (t.CPT_CODE NOT IN ('90460', '90461', '90471', '90472', '90473', '90474', '96360', '96365', '96401', '96413', '96415', '96420', '96422', '96423', '96425', '96440', '96446', '96450', '96542', '96361', '96366', '96367', '96368', '96369', '96370', '96371', '96372', '96373', '96374', '96375', '96376', '96379', '96402', '96405', '96406', '96409', '96411', '96416', '96417', '96521', '96522', '96523') OR t.CPT_CODE IS NULL) THEN 
+							CASE 
+								WHEN COALESCE(t.RVU_WORK,0) > 0 THEN COALESCE(t.RVU_WORK,0) * COALESCE(t.PROCEDURE_QUANTITY,0)
+								ELSE COALESCE(t.RELATIVE_VALUE_UNIT,0)
+							END
+						ELSE 0
+					END
+				END 
+
+		/* DETAIL_TYPE not equal to 1 or 10 */
+		ELSE 0
+
+		END AS SUB_ADJWRVU,
+
+	COALESCE((SELECT m.MOD_PCT from SSIS.dbo.TMP_MOD_OVERRIDE m where m.EXTERNAL_ID = t.MODIFIER_ONE),1.00) AS MOD_PCT1,
+	COALESCE((SELECT m.MOD_PCT from SSIS.dbo.TMP_MOD_OVERRIDE m where m.EXTERNAL_ID = t.MODIFIER_TWO),1.00) AS MOD_PCT2,
+	COALESCE((SELECT m.MOD_PCT from SSIS.dbo.TMP_MOD_OVERRIDE m where m.EXTERNAL_ID = t.MODIFIER_THREE),1.00) AS MOD_PCT3,
+	COALESCE((SELECT m.MOD_PCT from SSIS.dbo.TMP_MOD_OVERRIDE m where m.EXTERNAL_ID = t.MODIFIER_FOUR),1.00) AS MOD_PCT4
+
+INTO SSIS.dbo.TMP_TRANS
+FROM   Clarity.dbo.CLARITY_TDL_TRAN t
+LEFT OUTER JOIN SSIS.dbo.TMP_EAP_RVU_PER_MOD mod26 ON mod26.PROC_ID = t.PROC_ID AND mod26.RVU_PER_MOD = '26' AND t.ORIG_POST_DATE >= mod26.BEGIN_CONTACT_DATE AND t.ORIG_POST_DATE < mod26.END_CONTACT_DATE AND mod26.BEGIN_CONTACT_DATE <> mod26.END_CONTACT_DATE
+LEFT OUTER JOIN SSIS.dbo.TMP_EAP_RVU_PER_MOD modTC ON modTC.PROC_ID = t.PROC_ID AND modTC.RVU_PER_MOD = 'TC' AND t.ORIG_POST_DATE >= modTC.BEGIN_CONTACT_DATE AND t.ORIG_POST_DATE < modTC.END_CONTACT_DATE AND modTC.BEGIN_CONTACT_DATE <> modTC.END_CONTACT_DATE
+LEFT OUTER JOIN Clarity.dbo.ZC_SPECIALTY s ON t.PROV_SPECIALTY_C = s.SPECIALTY_C
+LEFT OUTER JOIN SSIS.dbo.TMP_CLARITY_EAP_OT ot ON ot.PROC_ID = t.PROC_ID AND t.POST_DATE >= ot.BEGIN_CONTACT_DATE AND t.POST_DATE < ot.END_CONTACT_DATE AND ot.BEGIN_CONTACT_DATE <> ot.END_CONTACT_DATE
+LEFT OUTER JOIN Clarity.dbo.CLARITY_LOC loc on loc.loc_id = t.loc_id
+LEFT OUTER JOIN Clarity.dbo.CLARITY_DEP dep on dep.department_id = t.dept_id
+
+WHERE loc.RPT_GRP_TEN IN (1,11,13,16,17,18,19,21,1312)	
+AND ((t.TDL_EXTRACT_DATE >= @BEXTDT AND t.TDL_EXTRACT_DATE <= @EEXTDT)
+OR (t.POST_DATE >= @BPOSTDT AND t.POST_DATE <= @EPOSTDT))
+
+
+--****************************************
+--STEP 5 CALCULATE ADJ_WRVU
+--****************************************
+SELECT  
+	TDL_ID, DETAIL_TYPE, POST_DATE, ORIG_POST_DATE, ORIG_SERVICE_DATE, TX_ID, TRAN_TYPE, MATCH_TRX_ID, ACCOUNT_ID, PAT_ID, AMOUNT,
+	PATIENT_AMOUNT, INSURANCE_AMOUNT, RELATIVE_VALUE_UNIT, CUR_PAYOR_ID, CUR_PLAN_ID, PROC_ID, PERFORMING_PROV_ID, BILLING_PROVIDER_ID, 
+	ORIGINAL_PAYOR_ID, ORIGINAL_PLAN_ID, PROCEDURE_QUANTITY, CPT_CODE, MODIFIER_ONE, MODIFIER_TWO, MODIFIER_THREE, MODIFIER_FOUR, 
+	DX_ONE_ID, DX_TWO_ID, DX_THREE_ID, DX_FOUR_ID, DX_FIVE_ID, DX_SIX_ID, SERV_AREA_ID, LOC_ID, DEPT_ID, POS_ID, INVOICE_NUMBER, 
+	CLM_CLAIM_ID, PAT_AGING_DAYS, INS_AGING_DAYS, ACTION_PAYOR_ID, REASON_CODE_ID, USER_ID, TX_NUM, INT_PAT_ID, RVU_WORK, RVU_OVERHEAD, 
+	RVU_MALPRACTICE, REFERRAL_SOURCE_ID, REFERRAL_ID, MATCH_PAYOR_ID, VISIT_NUMBER, CHARGE_SLIP_NUMBER, PERIOD, CREDENTIALED_SPECIALTY, 
+
+	--I'M ONLY INCLUDING THESE 5 FIELDS FOR TESTING
+	--SUB_ADJWRVU, MOD_PCT1, MOD_PCT2, MOD_PCT3, MOD_PCT4,
+
+	CASE
+		WHEN SERV_AREA_ID = 1312 THEN 0.00
+		WHEN DETAIL_TYPE = 10 AND ORIG_POST_DATE < '2016-01-01' THEN SUB_ADJWRVU * MOD_PCT1 * MOD_PCT2 * MOD_PCT3 * MOD_PCT4
+		WHEN DETAIL_TYPE = 1 AND POST_DATE < '2016-01-01' THEN SUB_ADJWRVU * MOD_PCT1 * MOD_PCT2 * MOD_PCT3 * MOD_PCT4
+		ELSE SUB_ADJWRVU
+	END	AS ADJ_WRVU
+
+FROM dbo.TMP_TRANS
+
+
+--****************************************
+--STEP 6 CALCULATE TOTALS BY SERVICE AREA FOR SUMMARY REPORT
+--****************************************
+DECLARE @BPOSTDT DATETIME
+DECLARE @EPOSTDT DATETIME
+
+SELECT @BPOSTDT = ?
+SELECT @EPOSTDT = ?
+
+;WITH TMP_TOTALS (Service_Area_Name, Charges, Payments, Adjustments)
+AS
+(
+SELECT 
+	g.NAME as 'SERV_AREA_NAME'
+	,Charges = SUM(CASE WHEN t.DETAIL_TYPE IN (1,10) THEN t.AMOUNT ELSE 0 END)
+	,Payments = SUM(CASE WHEN t.DETAIL_TYPE IN (2,5,11,20,22,32,33) THEN t.PATIENT_AMOUNT + t.INSURANCE_AMOUNT ELSE 0 END)
+	,Adjustments = SUM(CASE WHEN t.DETAIL_TYPE IN (3,4,6,12,13,21,23,30,31) THEN t.AMOUNT ELSE 0 END)
+FROM SSIS.dbo.CHPIT_tmp_Transactions_ForTotals t
+
+INNER JOIN Clarity.dbo.ZC_LOC_RPT_GRP_10 g on g.RPT_GRP_TEN = t.SERV_AREA_ID
+WHERE t.POST_DATE >= @BPOSTDT AND t.POST_DATE <= @EPOSTDT
+GROUP BY g.NAME
+)
+SELECT *
+FROM TMP_TOTALS
+ORDER BY 1

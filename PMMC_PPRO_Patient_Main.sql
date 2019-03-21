@@ -23,7 +23,7 @@ select
 ,min(pat.CITY) as 'CITY'
 ,min(pat.BIRTH_DATE) as 'BIRTH DATE'
 ,min(case when hacl.LINE = 1 then cvg.SUBSCR_NAME end) as 'SUBSCRIBER NAME'
-,min(case when hacl.LINE = 1 then cvg.GROUP_NUM end) as 'GROUP NUMBER'
+,min(case when hacl.LINE = 1 then replace(cvg.GROUP_NUM,'|','') end) as 'GROUP NUMBER'
 ,min(case when hacl.LINE =1 then rel.NAME end) as 'RELATIONSHIP TO PATIENT'
 ,min(left(zms.ABBR,1)) as 'MARITAL STATUS OF PATIENT'
 ,min(sex.ABBR) as 'SEX OF PATIENT'
@@ -47,7 +47,6 @@ select
 ,min(left(pat.PAT_MIDDLE_NAME,1)) as 'PATIENT MIDDLE NAME'
 ,min(suffix.ABBR) as 'PATIENT SUFFIX'
 --,ROW_NUMBER() OVER(PARTITION BY LEFT(csd.LAST_INVOICE_NUM, LEN(csd.LAST_INVOICE_NUM) - 1) ORDER BY tdl.tx_id asc) as Row#
-,min(arpb_tx.UPDATE_DATE) as 'UPDATE DATE'
 
 from CLARITY_TDL_TRAN tdl
 left join ARPB_TRANSACTIONS arpb_tx on arpb_tx.TX_ID = tdl.TX_ID
@@ -78,19 +77,6 @@ and dep.GL_PREFIX not in ('6327')
 --	(19102101,19102102,19102105,19102103,19102104,17110102,19290068,17110101,19290020,11106133)
 
 --and LEFT(csd.LAST_INVOICE_NUM, LEN(csd.LAST_INVOICE_NUM) - 1) = '17832455'
-
---and LEFT(csd.LAST_INVOICE_NUM, LEN(csd.LAST_INVOICE_NUM) - 1) in
---('17867735'
---,'20176780'
---,'20176781'
---,'20323258'
---,'20323259'
---,'20323299'
---,'20323336'
---,'20323359'
---,'20323634'
---,'20323637'
---)
 
 group by 
 LEFT(csd.LAST_INVOICE_NUM, LEN(csd.LAST_INVOICE_NUM) - 1)
