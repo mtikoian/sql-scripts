@@ -18,6 +18,8 @@ Generic plans:
 we will need the plan ID, plan name, payer ID, payer name and the free text fields for coverage name, address, city, state, zip. It would be good to have a count of the claims that we sent to each free text address but I'm assuming because it's free text, the chance that they are the same each time is slim.
 */
 
+declare @start_date as date = EPIC_UTIL.EFN_DIN('mb-1') 
+declare @end_date as date = EPIC_UTIL.EFN_DIN('me-1') 
 
 select 
  tdl.ACCOUNT_ID
@@ -46,7 +48,8 @@ left join COVERAGE_2 cvg2 on cvg2.CVG_ID = cvg.COVERAGE_ID
 left join ZC_STATE zs on zs.STATE_C = cvg.STATE_C
 
 where tdl.DETAIL_TYPE = 50 -- insurance claims
-and tdl.POST_DATE >= '1/1/2018'
+and tdl.POST_DATE >= @start_date
+and tdl.POST_DATE <= @end_date
 and tdl.SERV_AREA_ID in (11,13,16,17,18,19)
 and tdl.CUR_PLAN_ID in 
 (350101

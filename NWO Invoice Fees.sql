@@ -41,8 +41,8 @@ where tdl.SERV_AREA_ID = 1614 -- Northwest Ohio Primary Care
 
 and tdl.DETAIL_TYPE = 20 -- Charge matched to Payment
 and tdl.ORIG_SERVICE_DATE <= '11/30/2018'
-and tdl.POST_DATE >= '12/1/2018'
-and tdl.POST_DATE <= '2/28/2019'
+and tdl.POST_DATE >= '3/1/2019'
+and tdl.POST_DATE <= '3/31/2019'
 and id.IDENTITY_TYPE_ID = 0
 
 order by tdl.TX_ID

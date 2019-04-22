@@ -1,0 +1,31 @@
+select 
+ ser.PROV_NAME as 'BILLING PROVIDER'
+,eap.PROC_CODE as 'PROCEDURE CODE'
+,eap.PROC_NAME as 'PROCEDURE DESC'
+,loc.LOC_ID as 'LOCATION ID'
+,loc.LOC_NAME as 'LOCATION NAME'
+,tdl.MODIFIER_ONE as 'MODIFIER ONE'
+,tdl.MODIFIER_TWO as 'MODIFIER TWO'
+,date.YEAR as 'YEAR'
+,sum(tdl.AMOUNT) as 'CHARGES'
+,sum(tdl.PROCEDURE_QUANTITY) as 'UNITS'
+
+from CLARITY_TDL_TRAN tdl
+left join CLARITY_SER ser on ser.PROV_ID = tdl.BILLING_PROVIDER_ID
+left join CLARITY_EAP eap on eap.PROC_ID = tdl.PROC_ID
+left join CLARITY_LOC loc on loc.LOC_ID = tdl.LOC_ID
+left join DATE_DIMENSION date on date.CALENDAR_DT = tdl.ORIG_SERVICE_DATE
+
+where tdl.BILLING_PROVIDER_ID = '3050895'
+and tdl.DETAIL_TYPE in (1,10)
+and tdl.ORIG_SERVICE_DATE >= '1/1/2017'
+
+group by
+ ser.PROV_NAME
+,eap.PROC_CODE
+,eap.PROC_NAME
+,loc.LOC_ID
+,loc.LOC_NAME
+,tdl.MODIFIER_ONE
+,tdl.MODIFIER_TWO 
+,date.YEAR

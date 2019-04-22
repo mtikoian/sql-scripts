@@ -2,8 +2,8 @@ select
 
  dep.DEPARTMENT_ID 'DEPARTMENT ID'
 ,dep.DEPARTMENT_NAME 'DEPARTMENT NAME'
-,coalesce(dep.RPT_GRP_ONE,'') 'DEPARTMENT ID GROUPER'
-,coalesce(dep.RPT_GRP_TWO,'') 'DEPARTMENT NAME GROUPER'
+,coalesce(dep.RPT_GRP_ONE,dep.DEPARTMENT_ID) 'DEPARTMENT ID GROUPER'
+,coalesce(dep.RPT_GRP_TWO,dep.DEPARTMENT_NAME) 'DEPARTMENT NAME GROUPER'
 ,dep.GL_PREFIX
 ,sa.RPT_GRP_TEN as 'REGION ID'
 ,upper(sa.NAME) as 'REGION'
@@ -21,5 +21,7 @@ left join clarity_loc loc on loc.loc_id = dep.rev_loc_id
 left join zc_loc_rpt_grp_10 sa on sa.RPT_GRP_TEN= loc.RPT_GRP_TEN
 where 
 dep.DEPARTMENT_ID in
-(11101178,19151162)
+(19147043,19390392,19390411,19290102,19151277,19151278,19151283)
+
 order by dep.DEPARTMENT_ID
+
